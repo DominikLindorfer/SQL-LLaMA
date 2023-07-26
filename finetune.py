@@ -126,8 +126,8 @@ def main(**kwargs):
         model = prepare_model_for_int8_training(model)
         
     # Convert the model to bfloat16 if fsdp and pure_bf16 is enabled
-    if train_config.enable_fsdp and fsdp_config.pure_bf16:
-        model.to(torch.bfloat16)
+    # if train_config.enable_fsdp and fsdp_config.pure_bf16:
+        # model.to(torch.bfloat16)
 
     # Load the tokenizer and add special tokens
     tokenizer = LlamaTokenizer.from_pretrained(train_config.model_name)
@@ -148,21 +148,21 @@ def main(**kwargs):
             
             freeze_transformer_layers(train_config.num_freeze_layers)
 
-        mixed_precision_policy, wrapping_policy = get_policies(fsdp_config, rank)
-        my_auto_wrapping_policy = fsdp_auto_wrap_policy(model, LlamaDecoderLayer)
+        # mixed_precision_policy, wrapping_policy = get_policies(fsdp_config, rank)
+        # my_auto_wrapping_policy = fsdp_auto_wrap_policy(model, LlamaDecoderLayer)
    
-        model = FSDP(
-            model,
-            auto_wrap_policy= my_auto_wrapping_policy if train_config.use_peft else wrapping_policy,
-            mixed_precision=mixed_precision_policy if not fsdp_config.pure_bf16 else None,
-            sharding_strategy=fsdp_config.sharding_strategy,
-            device_id=torch.cuda.current_device(),
-            limit_all_gathers=False,
-        )
-        if fsdp_config.fsdp_activation_checkpointing:
-            policies.apply_fsdp_checkpointing(model)
+        # model = FSDP(
+        #     model,
+        #     auto_wrap_policy= my_auto_wrapping_policy if train_config.use_peft else wrapping_policy,
+        #     mixed_precision=mixed_precision_policy if not fsdp_config.pure_bf16 else None,
+        #     sharding_strategy=fsdp_config.sharding_strategy,
+        #     device_id=torch.cuda.current_device(),
+        #     limit_all_gathers=False,
+        # )
+        # if fsdp_config.fsdp_activation_checkpointing:
+        #     policies.apply_fsdp_checkpointing(model)
     elif not train_config.quantization and not train_config.enable_fsdp:
-        model.to("cuda")
+        model.to("cuda")# Replace by CPU for Test
 
     dataset_config = generate_dataset_config(train_config, kwargs)
     

@@ -11,6 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+Convert Files to HF-Format using this python file
+
+pipenv run python convert_llama_weights_to_hf.py --input_dir ./models/ --model_size 7B --output_dir models_hf/7B   
+pipenv run python convert_llama_weights_to_hf.py --input_dir ./models/ --model_size 7Bf --output_dir models_hf/7Bf    
+"""
+
 import argparse
 import gc
 import json
