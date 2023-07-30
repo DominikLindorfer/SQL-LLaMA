@@ -6,6 +6,30 @@ from transformers import LlamaForCausalLM, LlamaTokenizer
 model_id="./models_hf/7B"
 
 tokenizer = LlamaTokenizer.from_pretrained(model_id)
+
+
+# https://github.com/tloen/alpaca-lora/issues/279
+
+# {
+#   "_from_model_config": true,
+#   "bos_token_id": 1,
+#   "eos_token_id": 2,
+#   "pad_token_id": 0,
+#   "transformers_version": "4.28.0.dev0"
+# }
+
+# Adding [PAD] gives id 0 for both padding and [UNK]
+# tokenizer.pad_token='[PAD]' 
+# tokenizer.pad_token_id
+# tokenizer.unk_token_id
+
+# tokenizer.add_special_tokens(
+#             {
+            
+#                 "pad_token": "<PAD>",
+#             }
+#         )
+
 # model =LlamaForCausalLM.from_pretrained(model_id, device_map='auto', torch_dtype=torch.float16)
 model =LlamaForCausalLM.from_pretrained(model_id, device_map='cpu', torch_dtype=torch.float32)
 
@@ -51,9 +75,9 @@ Summary:
 # model_input = tokenizer(eval_prompt, return_tensors="pt").to("cuda")
 model_input = tokenizer(eval_prompt, return_tensors="pt")
 
-model.eval()
-with torch.no_grad():
-    print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
+# model.eval()
+# with torch.no_grad():
+#     print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
 
 model.eval()
 with torch.no_grad():
@@ -66,6 +90,43 @@ model_input["input_ids"]
 
 
 tokenizer.decode([13, 29901, 26289, 29909])
+
+
+train_dataset[0]["input_ids"]
+tokenizer.decode(train_dataset[0]["input_ids"])
+
+train_dataset_alpaca[0]["input_ids"]
+train_dataset_alpaca[0]["labels"]
+train_dataset_alpaca[0]["attention_mask"]
+tokenizer.decode(train_dataset_alpaca[0]["input_ids"])
+tokenizer.decode(train_dataset_alpaca[0]["labels"])
+
+tokenizer.pad_id
+tokenizer.pad_token_id
+tokenizer.eos_token_id
+tokenizer.bos_token_id
+
+tokenizer.id
+
+model.config.pad_token_id
+
+count = 0
+
+for i in train_dataset_alpaca[0]["input_ids"]:
+    if i != 0:
+        count +=1  
+count
+len(train_dataset_alpaca[0]["input_ids"])
+
+count = 0
+
+for i in train_dataset_alpaca[0]["attention_mask"]:
+    if i != 0:
+        count +=1  
+count
+
+
+
 
 
 # # Prepare model for PEFT
