@@ -7,7 +7,7 @@ wikisql = load_dataset("wikisql", split="train", cache_dir="./datasets")
 spider = load_dataset("spider", split="train", cache_dir="./datasets")
 sql_create_context = load_dataset("b-mc2/sql-create-context", split="train", cache_dir="./datasets")
 rosetta_code = load_dataset("cakiki/rosetta-code", split="train", cache_dir="./datasets")
-starcoder_data = load_dataset("./datasets/sql", split="train", cache_dir="./datasets")
+# starcoder_data = load_dataset("./datasets/sql", split="train", cache_dir="./datasets")
 
 # Check how many SQL Samples are in rosetta-code set
 rosetta_code_sql = []
@@ -18,9 +18,9 @@ for i in range(len(rosetta_code)):
         # n_sql_examples += 1
 
         entry = {}
-        entry["question"] = rosetta_code[i]["task_description"]
-        entry["answer"] = rosetta_code[i]["code"]
-        entry["context"] = ""
+        entry["instruction"] = rosetta_code[i]["task_description"]  #question
+        entry["output"] = rosetta_code[i]["code"]                   #answer
+        entry["input"] = ""                                         #context
         rosetta_code_sql.append(entry)
 
 with open("rosetta_sql_dataset.json", "w") as f:
@@ -96,9 +96,9 @@ custom_sql_set = []
 for i, j, k in zip(longer_strings, longer_strings_question, longer_strings_context):
 
     entry = {}
-    entry["question"] = j
-    entry["answer"] = i
-    entry["context"] = k
+    entry["instruction"] = j    #question
+    entry["output"] = i         #answer
+    entry["input"] = k          #context
     
     custom_sql_set.append(entry)
 

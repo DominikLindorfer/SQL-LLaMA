@@ -13,8 +13,10 @@
             "justMyCode": true,
             "args" : [  
                 "--model_name_or_path", "./models_hf/7B/",
-                "--data_path", "./ft_datasets/alpaca_data.json",
+                //"--data_path", "./alpaca_data.json",
+                "--data_path", "./sql_create_dataset_cleaned.json",
                 "--output_dir", "output/",
+                "--model_max_length", "4096",
                 "--num_train_epochs", "5",
                 "--per_device_train_batch_size", "4",
                 "--per_device_eval_batch_size", "4",

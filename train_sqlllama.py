@@ -9,7 +9,6 @@ from torch.utils.data import Dataset
 from transformers import Trainer
 
 import json
-import io
 
 IGNORE_INDEX = (
     -100
@@ -28,10 +27,9 @@ PROMPT_DICT = {
     ),
 }
 
-
 @dataclass
 class ModelArguments:
-    model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    model_name_or_path: Optional[str] = field(default="models/7B")
 
 
 @dataclass
@@ -134,13 +132,13 @@ class SupervisedDataset(Dataset):
 
     def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer):
         super(SupervisedDataset, self).__init__()
-        logging.warning("Loading data from path: " + data_path)
+        logging.warning("Loading Dataset as .json from Path: " + data_path)
 
         f = open(data_path)
         list_data_dict = json.load(f)
         f.close()
 
-        logging.warning("Formatting inputs to Alpaca-Style")
+        logging.warning("...formatting inputs to Alpaca-Style...")
         prompt_input, prompt_no_input = (
             PROMPT_DICT["prompt_input"],
             PROMPT_DICT["prompt_no_input"],
@@ -271,6 +269,15 @@ def train():
     )
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    
+    # collator = data_module["data_collator"]
+    # collator_ret = collator.__call__(data_module["train_dataset"])
+    # f0 = collator_ret["input_ids"][0].tolist()
+    # f0 = len(collator_ret["input_ids"][0].tolist())
+
+    # for i in collator_ret["input_ids"]:
+    #     if tokenizer.pad_token_id not in i:
+    #         print(tokenizer.decode(i.tolist()))
 
     logging.warning(
         "Set HF-Trainer, Train the Model and Save to Directory: "
