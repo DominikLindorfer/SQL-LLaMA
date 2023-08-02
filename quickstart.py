@@ -46,6 +46,7 @@ train_dataset = get_preprocessed_dataset(tokenizer, samsum_dataset, 'train')
 train_dataset_alpaca = get_preprocessed_dataset(tokenizer, alpaca_dataset, 'train')
 
 print(train_dataset_alpaca[0])
+print(train_dataset[0])
 
 # train_dataset_alpaca.__getitem__(0)
 
