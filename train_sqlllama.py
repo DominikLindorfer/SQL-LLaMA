@@ -15,9 +15,6 @@ IGNORE_INDEX = (
     -100
 )  # Used in Transformers for Masking https://huggingface.co/docs/transformers/glossary#l
 DEFAULT_PAD_TOKEN = "[PAD]"
-DEFAULT_EOS_TOKEN = "</s>"
-DEFAULT_BOS_TOKEN = "</s>"
-DEFAULT_UNK_TOKEN = "</s>"
 PROMPT_DICT = {
     "prompt_input": (
         "Below is an instruction that describes a task, paired with an input that provides further context. "
@@ -164,7 +161,7 @@ class SupervisedDataset(Dataset):
 
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
-        
+
         logging.warning("Initialization of SupervisedDataset done!")
 
     def __len__(self):
@@ -216,21 +213,26 @@ def make_supervised_data_module(
 
 
 def train():
-    print("Parsing!")
+    """Training Loop for SQL-LLaMA using LLaMA2 with HF-Transformers and Alpaca Instruction-Style"""
+
+    logging.warning("Parsing HF-Transformers Arguments")
+
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    print("Setting up Pretrained Model!")
+    logging.warning(
+        "Setting up Pretrained-Model: " + str(model_args.model_name_or_path)
+    )
 
-    print(model_args.model_name_or_path)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
     )
 
-    print("Setting Tokenizer!")
+    logging.warning("Setting up Tokenizer from: " + str(model_args.model_name_or_path))
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -239,7 +241,12 @@ def train():
         use_fast=False,
     )
 
-    print("Tokenizer Padding!")
+    logging.warning(
+        "Add Tokenizer Padding: "
+        + str(DEFAULT_PAD_TOKEN)
+        + " and resize Transformer-Embeddings accordingly"
+    )
+
     if tokenizer.pad_token is None:
         smart_tokenizer_and_embedding_resize(
             special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
@@ -247,12 +254,34 @@ def train():
             model=model,
         )
 
-    print("Checking if llama in Tokenizer!")
-    if "llama" in model_args.model_name_or_path:
-        tokenizer.add_special_tokens(
-            {
-                "eos_token": DEFAULT_EOS_TOKEN,
-                "bos_token": DEFAULT_BOS_TOKEN,
-                "unk_token": DEFAULT_UNK_TOKEN,
-            }
-        )
+    logging.warning(
+        "Using the Following Special Token-IDs and Tokens: "
+        + " " + str(tokenizer.pad_token)
+        + " " + str(tokenizer.pad_token_id)
+        + " " + str(tokenizer.eos_token)
+        + " " + str(tokenizer.eos_token_id)
+        + " " + str(tokenizer.bos_token)
+        + " " + str(tokenizer.bos_token_id)
+        + " " + str(tokenizer.unk_token)
+        + " " + str(tokenizer.unk_token_id)
+    )
+
+    logging.warning(
+        "Setting data_module and data_collator using Alpaca-Style defined in PROMPT_DICT above."
+    )
+
+    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+
+    logging.warning(
+        "Set HF-Trainer, Train the Model and Save to Directory: "
+        + str(training_args.output_dir)
+    )
+    trainer = Trainer(
+        model=model, tokenizer=tokenizer, args=training_args, **data_module
+    )
+    trainer.train()
+    trainer.save_model(output_dir=training_args.output_dir)
+
+
+if __name__ == "__main__":
+    train()
