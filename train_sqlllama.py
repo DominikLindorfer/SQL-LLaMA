@@ -228,6 +228,8 @@ def train():
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
     )
+    
+    params = model.parameters()
 
     logging.warning("Setting up Tokenizer from: " + str(model_args.model_name_or_path))
 
