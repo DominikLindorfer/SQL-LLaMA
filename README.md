@@ -2,105 +2,193 @@
 
 ![SQLLLaMA](https://github.com/DominikLindorfer/SQL-LLaMA/assets/21077042/ab07a05b-b052-43f4-89fe-701abccf1d3d)
 
-# Llama 2
+# SQL-LLaMA 2
 
-We are unlocking the power of large language models. Our latest version of Llama is now accessible to individuals, creators, researchers and businesses of all sizes so that they can experiment, innovate and scale their ideas responsibly. 
+This project presents an instruction-following model based on LLaMA-2 for generation of SQL code based on natural language queries, commonly referred to as Text-2-SQL. 
 
-This release includes model weights and starting code for pretrained and fine-tuned Llama language models — ranging from 7B to 70B parameters.
+This release includes model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
 
-This repository is intended as a minimal example to load [Llama 2](https://ai.meta.com/research/publications/llama-2-open-foundation-and-fine-tuned-chat-models/) models and run inference. For more detailed examples leveraging HuggingFace, see [llama-recipes](https://github.com/facebookresearch/llama-recipes/).
-
-## Download
-
-⚠️ **7/18: We're aware of people encountering a number of download issues today. Anyone still encountering issues should remove all local files, re-clone the repository, and [request a new download link](https://ai.meta.com/resources/models-and-libraries/llama-downloads/). It's critical to do all of these in case you have local corrupt files. When you receive the email, copy *only* the link text - it should begin with https://download.llamameta.net and not with https://l.facebook.com, which will give errors.**
+## Demo of SQL-LLaMA-13B using llama.cpp Inference on an Intel i-13600K with 64GB RAM
 
 
+## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
 
-In order to download the model weights and tokenizer, please visit the [Meta AI website](https://ai.meta.com/resources/models-and-libraries/llama-downloads/) and accept our License.
+Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
 
-Once your request is approved, you will receive a signed URL over email. Then run the download.sh script, passing the URL provided when prompted to start the download. Make sure that you copy the URL text itself, **do not use the 'Copy link address' option** when you right click the URL. If the copied URL text starts with: https://download.llamameta.net, you copied it correctly. If the copied URL text starts with: https://l.facebook.com, you copied it the wrong way.
+    python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
 
-Pre-requisites: make sure you have `wget` and `md5sum` installed. Then to run the script: `./download.sh`.
+Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
 
-Keep in mind that the links expire after 24 hours and a certain amount of downloads. If you start seeing errors such as `403: Forbidden`, you can always re-request a link.
+    from llama_cpp import Llama
+    llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
 
-### Access on Hugging Face
+    # prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
+    
+    output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
+    print(output)
 
-We are also providing downloads on [Hugging Face](https://huggingface.co/meta-llama). You must first request a download from the Meta AI website using the same email address as your Hugging Face account. After doing so, you can request access to any of the models on Hugging Face and within 1-2 days your account will be granted access to all versions.
+## Model Weights on HuggingFace Repo
 
-## Setup
+## Examples:
 
-In a conda env with PyTorch / CUDA available, clone the repo and run in the top-level directory:
+**Prompt:** "Write a Python program that fits a spline curve into data."
+
+**Output:**
+
+    import numpy as np
+    from scipy.optimize import curve_fit
+
+    def func(x, a, b, c):
+        return a*x**2 + b*x + c
+
+    x_data = np.array([1, 2, 3, 4, 5])
+    y_data = func(x_data, 2, 3, 5)
+
+    popt, pcov = curve_fit(func, x_data, y_data)
+
+    print("Best-fit parameters:", popt)
+    print("Parameter uncertainties:", pcov)
+
+## Training using Deepspeed
+
+SQL-LLaMA has been trained on **1(!) single A100 40G GPU as well as 256GB RAM**, which is commonly found in older research clusters. The original Stanford Alpaca model and it's variants usually are trained on 8 A100 80G GPUs in FSDP `full_shard` mode - a configuration not available to me and many others. Thus, this project relies heavily on [Microsoft's Deepspeed Library](www.deepspeed.ai) which not only reduces the GPU resources needed but can offload to RAM using the Deepspeed Stage 3 approach. Please check out their papers in Ref [2,3 & 4]. 
+
+The deepspeed configuration that was used for all models is:
+    
+    ds_config_sql.json:
+    
+    
+      "bf16": {
+        "enabled": "auto"
+      },
+      "optimizer": {
+        "type": "AdamW",
+        "params": {
+          "lr": "auto",
+          "betas": "auto",
+          "eps": "auto",
+          "weight_decay": "auto"
+        }
+      },
+      "scheduler": {
+        "type": "WarmupDecayLR",
+        "params": {
+          "total_num_steps": "auto",
+          "warmup_min_lr": "auto",
+          "warmup_max_lr": "auto",
+          "warmup_num_steps": "auto"
+        }
+      },
+      "zero_optimization": {
+        "stage": 3,
+        "offload_optimizer": {
+          "device": "cpu",
+          "pin_memory": true
+        },
+        "offload_param": {
+          "device": "cpu",
+          "pin_memory": true
+        },
+        "overlap_comm": true,
+        "contiguous_gradients": true,
+        "sub_group_size": 1e5,
+        "reduce_bucket_size": 2e8,
+        "stage3_prefetch_bucket_size": "auto",
+        "stage3_param_persistence_threshold": "auto",
+        "stage3_max_live_parameters": 1e6,
+        "stage3_max_reuse_distance": 1e6,
+        "stage3_gather_16bit_weights_on_model_save": true
+      },
+      "gradient_accumulation_steps": "auto",
+      "gradient_clipping": "auto",
+      "steps_per_print": 1,
+      "train_batch_size": "auto",
+      "train_micro_batch_size_per_gpu": "auto",
+      "wall_clock_breakdown": false
+    }
+
+
+## Data Release
+[`data/pyinstructions.json`](./data/pyinstructions.json) contains ~10.5K instruction-following data used for fine-tuning the SQL-LLaMA 7B & 13B models, following the Alpaca instruction tuning method in Ref. [6]. For fine-tuning the SQL-LLaMA-small models using the ideas proposed in LIMA (Ref. [7]), the data in [`data/pyinstructions.json`](./data/pyinstructions.json) contain a subset of ~1.4K instruction-following data.
+
+This JSON files consist of a list of dictionaries and each dictionary contains the following fields:
+- `instruction`: `str`, describes the task the model should perform.
+- `input`: `str`, input for the task. Specifically, for SQL-LLaMA the `input` string describes the structure of the SQL tables from which the query should be performed.
+- `output`: `str`, the answer to the instruction as taken from [Referenz bc2 Dataset / Spider / WikiSQL].
+
+For example:
 
 ```
-pip install -e .
+{
+        "instruction": "What number corresponds to the quantity of 24?",
+        "input": "CREATE TABLE table_name_50 (number_s_ VARCHAR, quantity VARCHAR)",
+        "output": "SELECT number_s_ FROM table_name_50 WHERE quantity = \"24\""
+}
 ```
 
-## Inference
+## Fine-tuning Parameters
 
-Different models require different model-parallel (MP) values:
+The SQL-LLaMA models are fine-tuned using HuggingFace's Trainer an the following parameters:
 
-|  Model | MP |
-|--------|----|
-| 7B     | 1  |
-| 13B    | 2  |
-| 70B    | 8  |
+* Batch size: 128
+* Learning rate: 2e-5
+* Epochs: 3 (7B and 13B) and 5 (7B-5)
+* Max length: 512
+* Weight decay: 0
 
-All models support sequence length up to 4096 tokens, but we pre-allocate the cache according to `max_seq_len` and `max_batch_size` values. So set those according to your hardware.
+Below is an example command used to fine-tuning the SQL-LLaMA-small 13B model with our dataset on a machine with 1 A100 40G GPU using deepspeed, as described above.
+Replace `./models_hf/13B/` with the path to your HuggingFace converted checkpoint and tokenizer, `./output_sqlAlpaca13B_small/` with the directory to store the output and "./sql_create_dataset_cleaned_small.json" with the dataset of your choice. The actual scripts the replicate each individual model are stored in [`data/pyinstructions.json`](./data/pyinstructions.json).
 
-### Pretrained Models
-
-These models are not finetuned for chat or Q&A. They should be prompted so that the expected answer is the natural continuation of the prompt.
-
-See `example_text_completion.py` for some examples. To illustrate, see command below to run it with the llama-2-7b model (`nproc_per_node` needs to be set to the `MP` value):
-
-```
-torchrun --nproc_per_node 1 example_text_completion.py \
-    --ckpt_dir llama-2-7b/ \
-    --tokenizer_path tokenizer.model \
-    --max_seq_len 128 --max_batch_size 4
-```
-
-### Fine-tuned Chat Models
-
-The fine-tuned models were trained for dialogue applications. To get the expected features and performance for them, a specific formatting defined in [`chat_completion`](https://github.com/facebookresearch/llama/blob/main/llama/generation.py#L212)
-needs to be followed, including the `INST` and `<<SYS>>` tags, `BOS` and `EOS` tokens, and the whitespaces and breaklines in between (we recommend calling `strip()` on inputs to avoid double-spaces).
-
-You can also deploy additional classifiers for filtering out inputs and outputs that are deemed unsafe. See the llama-recipes repo for [an example](https://github.com/facebookresearch/llama-recipes/blob/main/inference/inference.py) of how to add a safety checker to the inputs and outputs of your inference code.
-
-Examples using llama-2-7b-chat:
-
-```
-torchrun --nproc_per_node 1 example_chat_completion.py \
-    --ckpt_dir llama-2-7b-chat/ \
-    --tokenizer_path tokenizer.model \
-    --max_seq_len 512 --max_batch_size 4
+```bash
+torchrun --master_port=1211 train_sqlllama.py.py \
+    --model_name_or_path ./models_hf/13B/ \
+    --data_path "./sql_create_dataset_cleaned_small.json" \
+    --bf16 True \
+    --output_dir ./output_sqlAlpaca13B_small/ \
+    --num_train_epochs 15 \
+    --per_device_train_batch_size 4 \
+    --per_device_eval_batch_size 4 \
+    --gradient_accumulation_steps 8 \
+    --gradient_checkpointing True \
+    --evaluation_strategy "no" \
+    --learning_rate 1e-5 \
+    --weight_decay 0.1 \
+    --lr_scheduler_type "cosine" \
+    --warmup_steps 0 \
+    --deepspeed ds_config_sql.json \
+    --tf32 True \
+    --logging_steps 1 \
+    --save_strategy "steps" \
+    --save_steps 500 \
+    --save_total_limit 1 \
 ```
 
-Llama 2 is a new technology that carries potential risks with use. Testing conducted to date has not — and could not — cover all scenarios.
-In order to help developers address these risks, we have created the [Responsible Use Guide](Responsible-Use-Guide.pdf). More details can be found in our research paper as well.
+### Citation
 
-## Issues
+Please cite the repo if you use the data or code in this repo.
 
-Please report any software “bug,” or other problems with the models through one of the following means:
-- Reporting issues with the model: [github.com/facebookresearch/llama](http://github.com/facebookresearch/llama)
-- Reporting risky content generated by the model: [developers.facebook.com/llama_output_feedback](http://developers.facebook.com/llama_output_feedback)
-- Reporting bugs and security concerns: [facebook.com/whitehat/info](http://facebook.com/whitehat/info)
+```
+@misc{alpaca,
+  author = {Dominik Lindorfer},
+  title = {SQL-LLaMA: Text-2-SQL using an Instruction-following LLaMA-2 Model},
+  year = {2023},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/dominiklindorfer/SQL-LLaMA}},
+}
+```
 
-## Model Card
-See [MODEL_CARD.md](MODEL_CARD.md).
-
-## License
-
-Our model and weights are licensed for both researchers and commercial entities, upholding the principles of openness. Our mission is to empower individuals, and industry through this opportunity, while fostering an environment of discovery and ethical AI advancements. 
-
-See the [LICENSE](LICENSE) file, as well as our accompanying [Acceptable Use Policy](USE_POLICY.md)
+Please also cite the following references below.
 
 ## References
 
-1. [Research Paper](https://ai.meta.com/research/publications/llama-2-open-foundation-and-fine-tuned-chat-models/)
-2. [Llama 2 technical overview](https://ai.meta.com/resources/models-and-libraries/llama)
-3. [Open Innovation AI Research Community](https://ai.meta.com/llama/open-innovation-ai-research-community/)
+[1]: LLaMA: Open and Efficient Foundation Language Models. Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, Guillaume Lample. https://arxiv.org/abs/2302.13971v1
 
-## Original LLaMA
-The repo for the original llama release is in the [`llama_v1`](https://github.com/facebookresearch/llama/tree/llama_v1) branch.
+[2]: ZeRO-Offload: Democratizing Billion-Scale Model Training. Jie Ren, Samyam Rajbhandari, Reza Yazdani Aminabadi, Olatunji Ruwase, Shuangyan Yang, Minjia Zhang, Dong Li, Yuxiong He. https://arxiv.org/abs/2101.06840
+
+[3]: ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep Learning. Samyam Rajbhandari, Olatunji Ruwase, Jeff Rasley, Shaden Smith, Yuxiong He. https://arxiv.org/abs/2104.07857
+
+[4]: ZeRO: Memory Optimizations Toward Training Trillion Parameter Models. Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, Yuxiong He. https://arxiv.org/abs/1910.02054
+
+[5]: Self-Instruct: Aligning Language Model with Self Generated Instructions. Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A. Smith, Daniel Khashabi, Hannaneh Hajishirzi. https://arxiv.org/abs/2212.10560
+
