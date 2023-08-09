@@ -164,7 +164,7 @@ ds_config_sql.json:
 This JSON files consist of a list of dictionaries and each dictionary contains the following fields:
 - `instruction`: `str`, describes the task the model should perform.
 - `input`: `str`, input for the task. Specifically, for SQL-LLaMA the `input` string describes the structure of the SQL tables from which the query should be performed.
-- `output`: `str`, the answer to the instruction as taken from [Referenz bc2 Dataset / Spider / WikiSQL].
+- `output`: `str`, the answer to the instruction, i.e. the SQL Code.
 
 For example:
 
