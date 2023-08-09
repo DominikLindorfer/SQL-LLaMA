@@ -6,6 +6,27 @@
 
 This project presents **SQL-LLaMA**, a Text-2-SQL model based on **LLaMA-2** for instruction-based generation of SQL code from natural language queries. In this repository I release model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
 
+## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
+
+Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
+```bash
+python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
+```
+
+Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
+
+```python
+from llama_cpp import Llama
+llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
+
+# prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
+
+output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
+print(output)
+```
+
+Note: If you are using windows, please use the provided wheel to install [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python/releases ) with pip.
+
 ## Examples from SQL-LLaMA-13B-small:
 
 **Prompt:** 
@@ -62,26 +83,7 @@ SELECT T2.name, T2.capacity FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_
 ## Demo of SQL-LLaMA-13B using llama.cpp Inference on an Intel i-13600K with 64GB RAM
 
 
-## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
 
-Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
-```bash
-python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
-```
-
-Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
-
-```python
-from llama_cpp import Llama
-llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
-
-# prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
-
-output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
-print(output)
-```
-
-Note: If you are using windows, please use the provided wheel to install [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python/releases ) with pip.
 
 ## Model Weights on HuggingFace Repo
 
@@ -166,11 +168,11 @@ This JSON files consist of a list of dictionaries and each dictionary contains t
 
 For example:
 
-```
+```json
 {
-        "instruction": "What number corresponds to the quantity of 24?",
-        "input": "CREATE TABLE table_name_50 (number_s_ VARCHAR, quantity VARCHAR)",
-        "output": "SELECT number_s_ FROM table_name_50 WHERE quantity = \"24\""
+    "instruction": "What number corresponds to the quantity of 24?",
+    "input": "CREATE TABLE table_name_50 (number_s_ VARCHAR, quantity VARCHAR)",
+    "output": "SELECT number_s_ FROM table_name_50 WHERE quantity = \"24\""
 }
 ```
 
