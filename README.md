@@ -14,22 +14,27 @@ This release includes model weights, the dataset and the code used for finetunin
 ## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
 
 Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
-
-    python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
+```bash
+python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
+```
 
 Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
 
-    from llama_cpp import Llama
-    llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
+```python
+from llama_cpp import Llama
+llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
 
-    # prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
-    
-    output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
-    print(output)
+# prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
+
+output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
+print(output)
+```
+
+Note: If you are using windows, please use the provided wheel to install [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python/releases ) with pip.
 
 ## Model Weights on HuggingFace Repo
 
-## Examples:
+## Examples from SQL-LLaMA-13B-small:
 
 **Prompt:** 
 
@@ -50,68 +55,99 @@ WHERE T1.Model = "volvo"
 ORDER BY T2.accelerate LIMIT 1
 ```
 
+**Prompt:** 
+
+    "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    
+    ### Instruction:\nWhat is the average number of employees of the departments whose rank is between 9 and 15?
+    
+    ### Input:\nCREATE TABLE department (num_employees INTEGER, ranking INTEGER)
+    
+    ### Response:"
+
+**Output:**
+    
+```sql
+SELECT AVG(num_employees) FROM department WHERE ranking BETWEEN 9 AND 15
+```
+
+**Prompt:** 
+
+    "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    
+    ### Instruction:\nShow the stadium name and capacity with most number of concerts in year 2014 or after.
+    
+    ### Input:\nCREATE TABLE stadium (name VARCHAR, capacity VARCHAR, stadium_id VARCHAR); CREATE TABLE concert (stadium_id VARCHAR, year VARCHAR)
+    
+    ### Response:"
+
+**Output:**
+    
+```sql
+SELECT T2.name, T2.capacity FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_id = T2.stadium_id WHERE T1.year >= 2014 GROUP BY T1.stadium_id ORDER BY COUNT(*) DESC LIMIT 1
+```
 
 ## Training using Deepspeed
 
 SQL-LLaMA has been trained on **1(!) single A100 40G GPU as well as 256GB RAM**, which is commonly found in older research clusters. The original Stanford Alpaca model and it's variants usually are trained on 8 A100 80G GPUs in FSDP `full_shard` mode - a configuration not available to me and many others. Thus, this project relies heavily on [Microsoft's Deepspeed Library](www.deepspeed.ai) which not only reduces the GPU resources needed but can offload to RAM using the Deepspeed Stage 3 approach. Please check out their papers in Ref [2,3 & 4]. 
 
 The deepspeed configuration that was used for all models is:
-    
-    ds_config_sql.json:
-    
-    
-      "bf16": {
-        "enabled": "auto"
-      },
-      "optimizer": {
-        "type": "AdamW",
-        "params": {
-          "lr": "auto",
-          "betas": "auto",
-          "eps": "auto",
-          "weight_decay": "auto"
-        }
-      },
-      "scheduler": {
-        "type": "WarmupDecayLR",
-        "params": {
-          "total_num_steps": "auto",
-          "warmup_min_lr": "auto",
-          "warmup_max_lr": "auto",
-          "warmup_num_steps": "auto"
-        }
-      },
-      "zero_optimization": {
-        "stage": 3,
-        "offload_optimizer": {
-          "device": "cpu",
-          "pin_memory": true
-        },
-        "offload_param": {
-          "device": "cpu",
-          "pin_memory": true
-        },
-        "overlap_comm": true,
-        "contiguous_gradients": true,
-        "sub_group_size": 1e5,
-        "reduce_bucket_size": 2e8,
-        "stage3_prefetch_bucket_size": "auto",
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": 1e6,
-        "stage3_max_reuse_distance": 1e6,
-        "stage3_gather_16bit_weights_on_model_save": true
-      },
-      "gradient_accumulation_steps": "auto",
-      "gradient_clipping": "auto",
-      "steps_per_print": 1,
-      "train_batch_size": "auto",
-      "train_micro_batch_size_per_gpu": "auto",
-      "wall_clock_breakdown": false
-    }
 
+```json 
+ds_config_sql.json:
+{
+  "bf16": {
+    "enabled": "auto"
+  },
+  "optimizer": {
+    "type": "AdamW",
+    "params": {
+      "lr": "auto",
+      "betas": "auto",
+      "eps": "auto",
+      "weight_decay": "auto"
+    }
+  },
+  "scheduler": {
+    "type": "WarmupDecayLR",
+    "params": {
+      "total_num_steps": "auto",
+      "warmup_min_lr": "auto",
+      "warmup_max_lr": "auto",
+      "warmup_num_steps": "auto"
+    }
+  },
+  "zero_optimization": {
+    "stage": 3,
+    "offload_optimizer": {
+      "device": "cpu",
+      "pin_memory": true
+    },
+    "offload_param": {
+      "device": "cpu",
+      "pin_memory": true
+    },
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "sub_group_size": 1e5,
+    "reduce_bucket_size": 2e8,
+    "stage3_prefetch_bucket_size": "auto",
+    "stage3_param_persistence_threshold": "auto",
+    "stage3_max_live_parameters": 1e6,
+    "stage3_max_reuse_distance": 1e6,
+    "stage3_gather_16bit_weights_on_model_save": true
+  },
+  "gradient_accumulation_steps": "auto",
+  "gradient_clipping": "auto",
+  "steps_per_print": 1,
+  "train_batch_size": "auto",
+  "train_micro_batch_size_per_gpu": "auto",
+  "wall_clock_breakdown": false
+}
+```
 
 ## Data Release
-[`data/pyinstructions.json`](./data/pyinstructions.json) contains ~10.5K instruction-following data used for fine-tuning the SQL-LLaMA 7B & 13B models, following the Alpaca instruction tuning method in Ref. [5]. For fine-tuning the SQL-LLaMA-small models using the ideas proposed in LIMA (Ref. [6]), the data in [`data/pyinstructions.json`](./data/pyinstructions.json) contain a subset of ~1.4K instruction-following data.
+[`data/pyinstructions.json`](./data/pyinstructions.json) contains ~10.5K instruction-following data used for fine-tuning the SQL-LLaMA 7B & 13B models, following the Alpaca instruction tuning method in Ref. [5]. For fine-tuning the SQL-LLaMA-small models, using the ideas proposed in LIMA (Ref. [6]), the data in [`data/pyinstructions.json`](./data/pyinstructions.json) contain a subset of ~1.4K instruction-following data. Both datasets are based / a finely curated subset of Ref. [7] and [8] using the checks provided by SQLGlot in Ref. [8].
 
 This JSON files consist of a list of dictionaries and each dictionary contains the following fields:
 - `instruction`: `str`, describes the task the model should perform.
@@ -137,6 +173,8 @@ The SQL-LLaMA models are fine-tuned using HuggingFace's Trainer an the following
 * Epochs: 3 (7B and 13B) and 5 (7B-5)
 * Max length: 512
 * Weight decay: 0
+
+Please note that both SQL-LLaMA-small 7B & 13B use the same LIMA training strategy proposed in Ref. [8] except that no dropout has been used.
 
 Below is an example command used to fine-tuning the SQL-LLaMA-small 13B model with our dataset on a machine with 1 A100 40G GPU using deepspeed, as described above.
 Replace `./models_hf/13B/` with the path to your HuggingFace converted checkpoint and tokenizer, `./output_sqlAlpaca13B_small/` with the directory to store the output and "./sql_create_dataset_cleaned_small.json" with the dataset of your choice. The actual scripts the replicate each individual model are stored in [`data/pyinstructions.json`](./data/pyinstructions.json).
@@ -195,3 +233,9 @@ Please also cite the following references below.
 [5]: Stanford Alpaca: An Instruction-following LLaMA model. Rohan Taori and Ishaan Gulrajani and Tianyi Zhang and Yann Dubois and Xuechen Li and Carlos Guestrin and Percy Liang and Tatsunori B. Hashimoto. https://github.com/tatsu-lab/stanford_alpaca
 
 [6]: LIMA: Less Is More for Alignment. Chunting Zhou, Pengfei Liu, Puxin Xu, Srini Iyer, Jiao Sun, Yuning Mao, Xuezhe Ma, Avia Efrat, Ping Yu, Lili Yu, Susan Zhang, Gargi Ghosh, Mike Lewis, Luke Zettlemoyer, Omer Levy. https://arxiv.org/abs/2305.11206
+
+[7]: Spider: A Large-Scale Human-Labeled Dataset for Complex and Cross-Domain Semantic Parsing and Text-to-SQL Task. Tao Yu, Rui Zhang, Kai Yang, Michihiro Yasunaga, Dongxu Wang, Zifan Li, James Ma, Irene Li, Qingning Yao, Shanelle Roman, Zilin Zhang, Dragomir Radev. https://arxiv.org/abs/1809.08887
+
+[8]: b-mc2's SQL_Create_Context Dataset on Huggingface. https://huggingface.co/datasets/b-mc2/sql-create-context
+
+[9]: Toby Mao's SQLGlot - SQLGlot is a no-dependency SQL parser, transpiler, optimizer, and engine. https://github.com/tobymao/sqlglot
