@@ -31,23 +31,25 @@ Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llam
 
 ## Examples:
 
-**Prompt:** "Write a Python program that fits a spline curve into data."
+**Prompt:** 
+
+    "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    
+    ### Instruction:\nFor model volvo, how many cylinders does the car with the least accelerate have?
+    
+    ### Input:\nCREATE TABLE CARS_DATA (cylinders VARCHAR, Id VARCHAR, accelerate VARCHAR); CREATE TABLE CAR_NAMES (MakeId VARCHAR, Model VARCHAR)
+    
+    ### Response:"
 
 **Output:**
+    
+```sql
+SELECT T2.cylinders
+FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.MakeId
+WHERE T1.Model = "volvo"
+ORDER BY T2.accelerate LIMIT 1
+```
 
-    import numpy as np
-    from scipy.optimize import curve_fit
-
-    def func(x, a, b, c):
-        return a*x**2 + b*x + c
-
-    x_data = np.array([1, 2, 3, 4, 5])
-    y_data = func(x_data, 2, 3, 5)
-
-    popt, pcov = curve_fit(func, x_data, y_data)
-
-    print("Best-fit parameters:", popt)
-    print("Parameter uncertainties:", pcov)
 
 ## Training using Deepspeed
 
@@ -109,7 +111,7 @@ The deepspeed configuration that was used for all models is:
 
 
 ## Data Release
-[`data/pyinstructions.json`](./data/pyinstructions.json) contains ~10.5K instruction-following data used for fine-tuning the SQL-LLaMA 7B & 13B models, following the Alpaca instruction tuning method in Ref. [6]. For fine-tuning the SQL-LLaMA-small models using the ideas proposed in LIMA (Ref. [7]), the data in [`data/pyinstructions.json`](./data/pyinstructions.json) contain a subset of ~1.4K instruction-following data.
+[`data/pyinstructions.json`](./data/pyinstructions.json) contains ~10.5K instruction-following data used for fine-tuning the SQL-LLaMA 7B & 13B models, following the Alpaca instruction tuning method in Ref. [5]. For fine-tuning the SQL-LLaMA-small models using the ideas proposed in LIMA (Ref. [6]), the data in [`data/pyinstructions.json`](./data/pyinstructions.json) contain a subset of ~1.4K instruction-following data.
 
 This JSON files consist of a list of dictionaries and each dictionary contains the following fields:
 - `instruction`: `str`, describes the task the model should perform.
@@ -168,7 +170,7 @@ torchrun --master_port=1211 train_sqlllama.py.py \
 Please cite the repo if you use the data or code in this repo.
 
 ```
-@misc{alpaca,
+@misc{SQL-LLaMA,
   author = {Dominik Lindorfer},
   title = {SQL-LLaMA: Text-2-SQL using an Instruction-following LLaMA-2 Model},
   year = {2023},
@@ -182,7 +184,7 @@ Please also cite the following references below.
 
 ## References
 
-[1]: LLaMA: Open and Efficient Foundation Language Models. Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, Guillaume Lample. https://arxiv.org/abs/2302.13971v1
+[1]: Llama 2: Open Foundation and Fine-Tuned Chat Models. Hugo Touvron et.al. [https://arxiv.org/abs/2302.13971v1](https://arxiv.org/abs/2307.09288)
 
 [2]: ZeRO-Offload: Democratizing Billion-Scale Model Training. Jie Ren, Samyam Rajbhandari, Reza Yazdani Aminabadi, Olatunji Ruwase, Shuangyan Yang, Minjia Zhang, Dong Li, Yuxiong He. https://arxiv.org/abs/2101.06840
 
@@ -190,5 +192,6 @@ Please also cite the following references below.
 
 [4]: ZeRO: Memory Optimizations Toward Training Trillion Parameter Models. Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, Yuxiong He. https://arxiv.org/abs/1910.02054
 
-[5]: Self-Instruct: Aligning Language Model with Self Generated Instructions. Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A. Smith, Daniel Khashabi, Hannaneh Hajishirzi. https://arxiv.org/abs/2212.10560
+[5]: Stanford Alpaca: An Instruction-following LLaMA model. Rohan Taori and Ishaan Gulrajani and Tianyi Zhang and Yann Dubois and Xuechen Li and Carlos Guestrin and Percy Liang and Tatsunori B. Hashimoto. https://github.com/tatsu-lab/stanford_alpaca
 
+[6]: LIMA: Less Is More for Alignment. Chunting Zhou, Pengfei Liu, Puxin Xu, Srini Iyer, Jiao Sun, Yuning Mao, Xuezhe Ma, Avia Efrat, Ping Yu, Lili Yu, Susan Zhang, Gargi Ghosh, Mike Lewis, Luke Zettlemoyer, Omer Levy. https://arxiv.org/abs/2305.11206
