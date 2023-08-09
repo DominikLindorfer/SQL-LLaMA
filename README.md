@@ -4,35 +4,7 @@
 
 # SQL-LLaMA 2
 
-This project presents an instruction-following model based on LLaMA-2 for generation of SQL code based on natural language queries, commonly referred to as Text-2-SQL. 
-
-This release includes model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
-
-## Demo of SQL-LLaMA-13B using llama.cpp Inference on an Intel i-13600K with 64GB RAM
-
-
-## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
-
-Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
-```bash
-python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
-```
-
-Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
-
-```python
-from llama_cpp import Llama
-llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
-
-# prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
-
-output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
-print(output)
-```
-
-Note: If you are using windows, please use the provided wheel to install [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python/releases ) with pip.
-
-## Model Weights on HuggingFace Repo
+This project presents **SQL-LLaMA**, a Text-2-SQL model based on **LLaMA-2** for instruction-based generation of SQL code from natural language queries. In this repository I release model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
 
 ## Examples from SQL-LLaMA-13B-small:
 
@@ -86,6 +58,44 @@ SELECT AVG(num_employees) FROM department WHERE ranking BETWEEN 9 AND 15
 ```sql
 SELECT T2.name, T2.capacity FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_id = T2.stadium_id WHERE T1.year >= 2014 GROUP BY T1.stadium_id ORDER BY COUNT(*) DESC LIMIT 1
 ```
+
+## Demo of SQL-LLaMA-13B using llama.cpp Inference on an Intel i-13600K with 64GB RAM
+
+
+## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
+
+Converting the SQL-LLaMA pytorch_model-*.bin files to the GGML format works in ~10min using [`data/pyinstructions.json`](./data/pyinstructions.json) (provided by [llama.cpp](https://github.com/ggerganov/llama.cpp)) and the following command
+```bash
+python .\convert.py "models_hf/output_pyAlpaca13B/pytorch_model-00001-of-00003.bin"
+```
+
+Inference using the [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python ) is then as simple as:
+
+```python
+from llama_cpp import Llama
+llm = Llama(model_path="./models_hf/output_sqlAlpaca13B_small/ggml-model-f32.bin")
+
+# prompt = "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.\n\n### Instruction:\nIf the population is 2188, what was the median household income?\n\n### Input:\nCREATE TABLE table_1840495_2 (median_house__hold_income VARCHAR, population VARCHAR)\n\n### Response:"
+
+output = llm(prompt, max_tokens=1024, stop=["Output"], echo=True)
+print(output)
+```
+
+Note: If you are using windows, please use the provided wheel to install [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python/releases ) with pip.
+
+## Model Weights on HuggingFace Repo
+
+https://huggingface.co/DominikLindorfer
+
+| Available Models  | Uploaded |
+| ------------- | ------------- |
+| SQL-LLaMa-7B-small  | :x:  |
+| SQL-LLaMa-13B-small | :x:  |
+| SQL-LLaMa-7B | :x:  |
+| SQL-LLaMa-13B | :x:  |
+
+
+
 
 ## Training using Deepspeed
 
