@@ -1,0 +1,1 @@
+python .\convert.py "SQL-LLaMA-13B/pytorch_model.bin"
