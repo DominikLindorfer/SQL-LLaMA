@@ -199,6 +199,7 @@ The SQL-LLaMA models are fine-tuned using HuggingFace's Trainer an the following
 | Weight decay    | 0.1  | 0.1 | 0.1  | 0.1  |
 | Warm-Up-Ratio   | -  | - | -  | -  | 
 
+**SQL-LLaMA 13B with 5 and 10 Epoch Training are now available too! (Same other parameters as SQL-LLaMA-13B)**
 
 Please note that both SQL-LLaMA-small 7B & 13B use the same LIMA training strategy proposed in Ref. [7] except that no dropout has been used and a cosine LR scheduler was employed.
 
