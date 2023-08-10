@@ -272,15 +272,6 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     
-    # collator = data_module["data_collator"]
-    # collator_ret = collator.__call__(data_module["train_dataset"])
-    # f0 = collator_ret["input_ids"][0].tolist()
-    # f0 = len(collator_ret["input_ids"][0].tolist())
-
-    # for i in collator_ret["input_ids"]:
-    #     if tokenizer.pad_token_id not in i:
-    #         print(tokenizer.decode(i.tolist()))
-
     logging.warning(
         "Set HF-Trainer, Train the Model and Save to Directory: "
         + str(training_args.output_dir)

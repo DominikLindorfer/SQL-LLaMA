@@ -7,5 +7,14 @@ __pycache__/
 *.so
 
 models/*
-models_hf/*
-datasets/*
+models_hf/7B
+models_hf/output*
+datasets_all/*
+datasets/spider/*
+ft_datasets/*
+llama2_recipies/*
+llama2_repo/*
+pictures/*
+
+
+

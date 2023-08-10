@@ -3,29 +3,11 @@ import pandas as pd
 import json
 
 # Import Datasets
-wikisql = load_dataset("wikisql", split="train", cache_dir="./datasets")
-spider = load_dataset("spider", split="train", cache_dir="./datasets")
-sql_create_context = load_dataset("b-mc2/sql-create-context", split="train", cache_dir="./datasets")
-rosetta_code = load_dataset("cakiki/rosetta-code", split="train", cache_dir="./datasets")
-# starcoder_data = load_dataset("./datasets/sql", split="train", cache_dir="./datasets")
-
-# Check how many SQL Samples are in rosetta-code set
-rosetta_code_sql = []
-
-for i in range(len(rosetta_code)):
-    if "sql" in str.lower(rosetta_code[i]["language_name"]):
-        # print(rosetta_code[i])
-        # n_sql_examples += 1
-
-        entry = {}
-        entry["instruction"] = rosetta_code[i]["task_description"]  #question
-        entry["output"] = rosetta_code[i]["code"]                   #answer
-        entry["input"] = ""                                         #context
-        rosetta_code_sql.append(entry)
-
-with open("rosetta_sql_dataset.json", "w") as f:
-    json.dump(rosetta_code_sql, f)
-
+wikisql = load_dataset("wikisql", split="train", cache_dir="./datasets_all")
+spider = load_dataset("spider", split="train", cache_dir="./datasets_all")
+sql_create_context = load_dataset("b-mc2/sql-create-context", split="train", cache_dir="./datasets_all")
+rosetta_code = load_dataset("cakiki/rosetta-code", split="train", cache_dir="./datasets_all")
+# starcoder_data = load_dataset("./datasets/sql", split="train", cache_dir="./datasets_all")
 
 # Simple Check to get a fixed # of longest strings in list
 def chk_add_querylen_list(query, querylen_list, max_length=10):
@@ -83,14 +65,13 @@ import matplotlib.pyplot as plt
 
 plt.hist(lengths, density=True, bins=70, color="blue")  # density=False would make counts
 plt.hist(lengths_longer_strings, density=True, bins=70, color="orange", alpha=0.7)  # density=False would make counts
+
+plt.legend(["b-mc2/sql_create_context", "SQL-LLaMA"])
+
 plt.ylabel('Probability')
-plt.xlabel('Data')
+plt.xlabel('Answer-Length')
 
-# max(lengths)
-# min(lengths)
-
-# re-create training dictionary
-
+# Dump sql_create_dataset.json which needs to be cleaned using sqlglot_cleaned_dataset.py to obtain sql_creal_dataset_cleaned.json (not all queries pass SQLGlot)
 custom_sql_set = []
 
 for i, j, k in zip(longer_strings, longer_strings_question, longer_strings_context):
@@ -102,6 +83,23 @@ for i, j, k in zip(longer_strings, longer_strings_question, longer_strings_conte
     
     custom_sql_set.append(entry)
 
-with open("sql_create_dataset.json", "w") as f:
+with open("./datasets/sql_create_dataset.json", "w") as f:
     json.dump(custom_sql_set, f)
 
+
+# Check how many SQL Samples are in rosetta-code set
+rosetta_code_sql = []
+
+for i in range(len(rosetta_code)):
+    if "sql" in str.lower(rosetta_code[i]["language_name"]):
+        # print(rosetta_code[i])
+        # n_sql_examples += 1
+
+        entry = {}
+        entry["instruction"] = rosetta_code[i]["task_description"]  #question
+        entry["output"] = rosetta_code[i]["code"]                   #answer
+        entry["input"] = ""                                         #context
+        rosetta_code_sql.append(entry)
+
+with open("./datasets/rosetta_sql_dataset.json", "w") as f:
+    json.dump(rosetta_code_sql, f)

@@ -13,7 +13,9 @@
 # limitations under the License.
 
 """
-Convert Files to HF-Format using this python file
+Convert Files to HF-Format using this Python File
+
+Assuming the Original LLaMA-2 Models are placed inside ./models/
 
 pipenv run python convert_llama_weights_to_hf.py --input_dir ./models/ --model_size 7B --output_dir models_hf/7B   
 pipenv run python convert_llama_weights_to_hf.py --input_dir ./models/ --model_size 7Bf --output_dir models_hf/7Bf    
@@ -41,7 +43,7 @@ except ImportError as e:
     LlamaTokenizerFast = None
 
 """
-Sample usage:
+Legacy Sample usage:
 
 ```
 python src/transformers/models/llama/convert_llama_weights_to_hf.py \
