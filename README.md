@@ -2,7 +2,11 @@
 
 # SQL-LLaMA 2
 
-This project presents **SQL-LLaMA**, a Text-2-SQL model based on **LLaMA-2** for instruction-based generation of SQL code from natural language queries. In this repository I release model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
+This project presents **SQL-LLaMA**, a Text-2-SQL model based on **LLaMA-2** [Ref. 1] for instruction-based generation of SQL code from natural language queries. In this repository I release model weights, the dataset and the code used for finetuning the LLaMA-2 7B and 13B language model.
+
+Furthermore, I explore the idea of LIMA [Ref. 6] for instruction tuning on SQL code in the models **SQL-LLaMA-7B-small** and **SQL-LLaMA-13B-small**, showing excellent performance despite only using a dataset of 1.4K SQL instructions (see more details below).
+
+This project is unique in the sense that, in addition, it has been trained on only **1(!) single A100 40G GPU as well as 256GB RAM** using Deepspeed ZeRO-3 offloading [Refs. 2,3 & 4].
 
 ## Simplistic Usage with [llama.cpp Python-Bindings]( https://github.com/abetlen/llama-cpp-python )
 
