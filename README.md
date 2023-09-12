@@ -93,12 +93,12 @@ https://huggingface.co/DominikLindorfer
 
 | Available Models  | Uploaded |
 | ------------- | ------------- |
-| SQL-LLaMA-7B-small  | :heavy_check_mark:  |
-| SQL-LLaMA-13B-small | :heavy_check_mark:  |
-| SQL-LLaMA-7B | :heavy_check_mark:  |
-| SQL-LLaMA-13B | :heavy_check_mark:  |
-| SQL-LLaMA-13B-5EP | :heavy_check_mark:  |
-| SQL-LLaMA-13B-10EP | :heavy_check_mark:  |
+| SQL-LLaMA-7B-small  | :white_check_mark:  |
+| SQL-LLaMA-13B-small | :white_check_mark:  |
+| SQL-LLaMA-7B | :white_check_mark:  |
+| SQL-LLaMA-13B | :white_check_mark:  |
+| SQL-LLaMA-13B-5EP | :white_check_mark:  |
+| SQL-LLaMA-13B-10EP | :white_check_mark:  |
 
 
 ## Data Release
