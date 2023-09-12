@@ -93,12 +93,12 @@ https://huggingface.co/DominikLindorfer
 
 | Available Models  | Uploaded |
 | ------------- | ------------- |
-| SQL-LLaMa-7B-small  | :x:  |
-| SQL-LLaMa-13B-small | :x:  |
-| SQL-LLaMa-7B | :x:  |
-| SQL-LLaMa-13B | :x:  |
-| SQL-LLaMa-13B-5EP | :x:  |
-| SQL-LLaMa-13B-10EP | :x:  |
+| SQL-LLaMA-7B-small  | :heavy_check_mark:  |
+| SQL-LLaMA-13B-small | :heavy_check_mark:  |
+| SQL-LLaMA-7B | :heavy_check_mark:  |
+| SQL-LLaMA-13B | :heavy_check_mark:  |
+| SQL-LLaMA-13B-5EP | :heavy_check_mark:  |
+| SQL-LLaMA-13B-10EP | :heavy_check_mark:  |
 
 
 ## Data Release
@@ -196,7 +196,7 @@ The SQL-LLaMA models are fine-tuned using HuggingFace's Trainer an the following
 
 | Parameter  | SQL-LLaMa-13B | SQL-LLaMa-13B-small | SQL-LLaMa-7B | SQL-LLaMa-7B-small |
 | ------------- | ------------- | ------------- | ------------- | ------------- | 
-| Batch Size / Gradien Accumulation  | 8 / 16  | 4 / 8  | 16 / 32  | 3 / 8  | 
+| Batch Size / Gradient Accumulation  | 8 / 16  | 4 / 8  | 16 / 32  | 3 / 8  | 
 | Learning rate   | 1e-5  | 1e-5 | 1e-5  | 1e-5  | 
 | Epochs          | 3  | 15  | 5  | 15  |
 | Max length      | 4096  | 4096 | 4096  | 4096  | 
