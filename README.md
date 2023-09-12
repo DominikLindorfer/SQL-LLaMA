@@ -84,7 +84,15 @@ SELECT T2.name, T2.capacity FROM concert AS T1 JOIN stadium AS T2 ON T1.stadium_
 
 ## Demo of SQL-LLaMA-13B using llama.cpp Inference on an Intel i-13600K with 64GB RAM
 
+**Prompt:** 
 
+```sql
+Show the stadium name and capacity with most number of concerts in year 2014 or after.
+
+Input:\nCREATE TABLE stadium (name VARCHAR, capacity VARCHAR, stadium_id VARCHAR); CREATE TABLE concert (stadium_id VARCHAR, year VARCHAR)
+```
+
+https://github.com/DominikLindorfer/SQL-LLaMA/assets/21077042/0e36bdd1-dd55-4715-b6a6-c55f8e008919
 
 
 ## Model Weights on HuggingFace Repo
